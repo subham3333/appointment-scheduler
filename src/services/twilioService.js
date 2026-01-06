@@ -1,6 +1,22 @@
 const { client, phoneNumber } = require('../../config/twilio');
 const { parseAppointmentDetails } = require('../utils/parser');
 
+/**
+ * Escape XML special characters
+ */
+function escapeXml(unsafe) {
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
 class TwilioService {
   /**
    * Make an outbound call
@@ -49,9 +65,10 @@ class TwilioService {
    * Generate TwiML response for handling calls
    */
   generateTwiML(message) {
+    const safeMessage = escapeXml(message);
     return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">${message}</Say>
+  <Say voice="alice">${safeMessage}</Say>
   <Record maxLength="120" transcribe="true" transcribeCallback="/webhooks/twilio/transcription"/>
 </Response>`;
   }

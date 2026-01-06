@@ -1,6 +1,7 @@
 const { Appointment, User } = require('../models');
 const twilioService = require('../services/twilioService');
 const { createDateTime } = require('../utils/parser');
+const { DEFAULT_APPOINTMENT_DURATION_MS } = require('../utils/constants');
 
 class TwilioController {
   /**
@@ -55,7 +56,7 @@ class TwilioController {
         const startTime = createDateTime(appointmentData.date, appointmentData.time);
         
         if (startTime) {
-          const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1 hour
+          const endTime = new Date(startTime.getTime() + DEFAULT_APPOINTMENT_DURATION_MS);
           
           const appointment = await Appointment.create({
             userId: user.id,

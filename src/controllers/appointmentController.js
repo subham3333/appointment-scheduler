@@ -1,4 +1,5 @@
 const { Appointment, User, Service } = require('../models');
+const { Op } = require('sequelize');
 const googleCalendarService = require('../services/googleCalendarService');
 
 class AppointmentController {
@@ -93,7 +94,7 @@ class AppointmentController {
 
       if (startDate && endDate) {
         whereClause.startTime = {
-          [require('sequelize').Op.between]: [new Date(startDate), new Date(endDate)]
+          [Op.between]: [new Date(startDate), new Date(endDate)]
         };
       }
 

@@ -1,5 +1,6 @@
 const { Appointment, User } = require('../models');
 const twilioService = require('../services/twilioService');
+const { createDateTime } = require('../utils/parser');
 
 class TwilioController {
   /**
@@ -51,25 +52,37 @@ class TwilioController {
       // Note: In production, you'd want more sophisticated parsing
       // and potentially human verification before confirming
       if (appointmentData.date && appointmentData.time) {
-        const appointment = await Appointment.create({
-          userId: user.id,
-          title: 'Phone Appointment',
-          description: appointmentData.notes,
-          startTime: new Date(`${appointmentData.date} ${appointmentData.time}`),
-          endTime: new Date(new Date(`${appointmentData.date} ${appointmentData.time}`).getTime() + 60 * 60 * 1000),
-          source: 'phone',
-          status: 'pending',
-          metadata: {
-            callSid: CallSid,
-            transcription: TranscriptionText
-          }
-        });
+        const startTime = createDateTime(appointmentData.date, appointmentData.time);
+        
+        if (startTime) {
+          const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1 hour
+          
+          const appointment = await Appointment.create({
+            userId: user.id,
+            title: 'Phone Appointment',
+            description: appointmentData.notes,
+            startTime: startTime,
+            endTime: endTime,
+            source: 'phone',
+            status: 'pending',
+            metadata: {
+              callSid: CallSid,
+              transcription: TranscriptionText
+            }
+          });
 
-        // Send confirmation SMS
-        await twilioService.sendSMS(
-          From,
-          `Your appointment request has been received. Confirmation pending.`
-        );
+          // Send confirmation SMS
+          await twilioService.sendSMS(
+            From,
+            `Your appointment request has been received. Confirmation pending.`
+          );
+        } else {
+          // Send SMS for invalid date/time
+          await twilioService.sendSMS(
+            From,
+            'We received your call but the date/time format was unclear. Please reply with: DD/MM/YYYY HH:MM AM/PM'
+          );
+        }
       } else {
         // Send SMS asking for clarification
         await twilioService.sendSMS(

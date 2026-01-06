@@ -1,5 +1,6 @@
 const { Appointment, User } = require('../models');
 const whatsappService = require('../services/whatsappService');
+const { createDateTime } = require('../utils/parser');
 
 class WhatsAppController {
   /**
@@ -70,26 +71,41 @@ class WhatsAppController {
 
       // Create appointment if we have date and time
       if (appointmentData.date && appointmentData.time) {
-        const appointment = await Appointment.create({
-          userId: user.id,
-          title: 'WhatsApp Appointment',
-          description: appointmentData.notes,
-          startTime: new Date(`${appointmentData.date} ${appointmentData.time}`),
-          endTime: new Date(new Date(`${appointmentData.date} ${appointmentData.time}`).getTime() + 60 * 60 * 1000),
-          source: 'whatsapp',
-          status: 'pending',
-          metadata: {
-            messageId: message.id,
-            originalMessage: messageBody
-          }
-        });
+        const startTime = createDateTime(appointmentData.date, appointmentData.time);
+        
+        if (startTime) {
+          const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1 hour
+          
+          const appointment = await Appointment.create({
+            userId: user.id,
+            title: 'WhatsApp Appointment',
+            description: appointmentData.notes,
+            startTime: startTime,
+            endTime: endTime,
+            source: 'whatsapp',
+            status: 'pending',
+            metadata: {
+              messageId: message.id,
+              originalMessage: messageBody
+            }
+          });
 
-        // Send confirmation
-        await whatsappService.sendAppointmentConfirmation(from, {
-          date: appointmentData.date,
-          time: appointmentData.time,
-          service: appointmentData.service || 'General'
-        });
+          // Send confirmation
+          await whatsappService.sendAppointmentConfirmation(from, {
+            date: appointmentData.date,
+            time: appointmentData.time,
+            service: appointmentData.service || 'General'
+          });
+        } else {
+          // Invalid date format
+          await whatsappService.sendMessage(
+            from,
+            'The date/time format was not recognized. Please use format:\n\n' +
+            '📅 DD/MM/YYYY\n' +
+            '⏰ HH:MM AM/PM\n\n' +
+            'Example: 25/12/2024 10:00 AM'
+          );
+        }
       } else {
         // Request more information
         await whatsappService.sendMessage(

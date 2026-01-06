@@ -1,4 +1,5 @@
 const { client, phoneNumber } = require('../../config/twilio');
+const { parseAppointmentDetails } = require('../utils/parser');
 
 class TwilioService {
   /**
@@ -41,29 +42,7 @@ class TwilioService {
    * This is a simplified parser - in production, use NLP/AI services
    */
   parseTranscription(transcription) {
-    const appointmentData = {
-      date: null,
-      time: null,
-      service: null,
-      notes: transcription
-    };
-
-    // Basic regex patterns for date and time extraction
-    const datePattern = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/;
-    const timePattern = /(\d{1,2}):(\d{2})\s*(am|pm)?/i;
-
-    const dateMatch = transcription.match(datePattern);
-    const timeMatch = transcription.match(timePattern);
-
-    if (dateMatch) {
-      appointmentData.date = dateMatch[0];
-    }
-
-    if (timeMatch) {
-      appointmentData.time = timeMatch[0];
-    }
-
-    return appointmentData;
+    return parseAppointmentDetails(transcription);
   }
 
   /**

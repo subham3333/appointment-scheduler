@@ -1,5 +1,6 @@
 const axios = require('axios');
 const whatsappConfig = require('../../config/whatsapp');
+const { parseAppointmentDetails } = require('../utils/parser');
 
 class WhatsAppService {
   /**
@@ -53,29 +54,7 @@ class WhatsAppService {
    * This is a simplified parser - in production, use NLP/AI services
    */
   parseMessage(messageText) {
-    const appointmentData = {
-      date: null,
-      time: null,
-      service: null,
-      notes: messageText
-    };
-
-    // Basic regex patterns for date and time extraction
-    const datePattern = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/;
-    const timePattern = /(\d{1,2}):(\d{2})\s*(am|pm)?/i;
-
-    const dateMatch = messageText.match(datePattern);
-    const timeMatch = messageText.match(timePattern);
-
-    if (dateMatch) {
-      appointmentData.date = dateMatch[0];
-    }
-
-    if (timeMatch) {
-      appointmentData.time = timeMatch[0];
-    }
-
-    return appointmentData;
+    return parseAppointmentDetails(messageText);
   }
 
   /**

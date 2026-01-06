@@ -41,10 +41,6 @@ const webhookRoutes = require('./routes/webhooks');
 app.use('/appointments', appointmentRoutes);
 app.use('/webhooks', webhookRoutes);
 
-// Sync calendar route (alternative path)
-const appointmentController = require('./controllers/appointmentController');
-app.post('/sync-calendar', appointmentController.syncToCalendar);
-
 // Error handling middleware
 app.use(errorLogger);
 

@@ -93,9 +93,15 @@ class AppointmentController {
       if (status) whereClause.status = status;
 
       if (startDate && endDate) {
-        whereClause.startTime = {
-          [Op.between]: [new Date(startDate), new Date(endDate)]
-        };
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        // Validate dates
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          whereClause.startTime = {
+            [Op.between]: [start, end]
+          };
+        }
       }
 
       const appointments = await Appointment.findAll({
